@@ -43,7 +43,7 @@ class MCTS:
         for i in range(self.n_simulations):
             break_early = self.simulation(root_node)
             if break_early:
-                print(f"{i}/{self.n_simulations} break early")
+                # print(f"{i}/{self.n_simulations} break early")
                 break
         
         max_visit_rate = -math.inf
