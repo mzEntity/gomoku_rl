@@ -44,7 +44,7 @@ class MCTSNode:
             if c._visit_count != 0:
                 exploit = c._total_value / c._visit_count
                 explore = math.sqrt(2.0 * math.log(self._visit_count) / float(c._visit_count))
-                # print(f"{exploit:.4f}, {explore:.4f}")
+                # print(f"{exploit:.4f}, {scalar*explore:.4f}")
                 score = -exploit + scalar * explore
             else:
                 score = math.inf
@@ -95,4 +95,7 @@ class MCTSNode:
             visit_distribution[a] = c._visit_count / self._visit_count
         return visit_distribution
     
+    
+    def is_dominate(self, total_visit_count) -> bool:
+        return self._visit_count >= total_visit_count / 2
     

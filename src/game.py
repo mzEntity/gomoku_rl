@@ -1,4 +1,4 @@
-from typing import List, Tuple, ClassVar
+from typing import List, Tuple, ClassVar, Dict
 
 from constant import WIDTH, WIN_LEN, EMPTY, FIRST_PLAYER
 
@@ -27,6 +27,7 @@ GameAction.ALL_ACTIONS = [GameAction(x, y) for x in range(WIDTH) for y in range(
 
 class GameState:
     EMPTY_STATE: ClassVar["GameState"]
+    NEXT_STATE_MAP: ClassVar[Dict["GameState", Dict[GameAction, "GameState"]]]
     
     def __init__(
         self, 
@@ -86,6 +87,8 @@ GameState.EMPTY_STATE = GameState(
     GameAction.EMPTY_ACTION, 
     0, False, EMPTY
 )
+
+GameState.NEXT_STATE_MAP = dict()
 
 
 # execute_action -> check -> (get_state) -> execute_action ->... -> execute_action -> check -> get_result

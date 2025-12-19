@@ -1,6 +1,8 @@
 from constant import EMPTY, WIDTH, WIN_LEN
 from game import GameState
 
+from typing import List, Dict, Tuple
+
 
 class Heuristic:
     def __init__(self, heuristic_config):
@@ -13,6 +15,8 @@ class Heuristic:
         
         self.advantage_weight_dict = heuristic_config['advantage_weight_dict']
         self.empty_advantage_weight_dict = heuristic_config['empty_advantage_weight_dict']
+        
+        self.immediate_win_weight = heuristic_config['immediate_win_weight']
         
     
     def cal_left_to_right(self, board, player):
@@ -220,6 +224,7 @@ class Heuristic:
      
     def cal_empty_open_dict(self, board, all_length_dict):
         all_empty_open_dict = {}
+        important_position = []
         for x in range(self.width):
             for y in range(self.width):
                 if board[x][y] != EMPTY:
@@ -257,28 +262,51 @@ class Heuristic:
                     else:
                         new_open_dict[new_length]['close'] += 1
                 
+                is_important = False
+                if not is_important:
+                    for i in range(self.win_len-3, self.win_len+1):
+                        if new_open_dict[i]['both'] > 0:
+                            is_important = True
+                            break
+                
+                if not is_important:
+                    for i in range(self.win_len-2, self.win_len+1):
+                        if new_open_dict[i]['half'] > 0:
+                            is_important = True
+                            break
+                
+                if not is_important:
+                    for i in range(self.win_len, self.win_len+1):
+                        if new_open_dict[i]['close'] > 0:
+                            is_important = True
+                            break
+                
+                if is_important:
+                    important_position.append((x, y))
+                    
                 all_empty_open_dict[(x, y)] = new_open_dict
-        return all_empty_open_dict
+        return all_empty_open_dict, important_position
     
-    
-    def opponent_is_already_win(self, open_dict) -> bool:
+                    
+    def is_already_win(self, open_dict) -> bool:
         win_len = self.win_len
         #  .ooooo. & .oooooX & XoooooX
         if open_dict[win_len]['both'] >= 1 or open_dict[win_len]['half'] >= 1 or open_dict[win_len]['close'] >= 1:
             return True
+        return False
         
+    
+    def opponent_is_immediate_win(self, open_dict) -> bool:
+        win_len = self.win_len        
         # .oooo.
         if open_dict[win_len-1]['both'] >= 1:
             return True
         
         return False
-                    
-    def player_is_already_win(self, open_dict, empty_open_dict) -> bool:
+    
+    
+    def player_is_immediate_win(self, open_dict, empty_open_dict) -> bool:
         win_len = self.win_len
-        #  .ooooo. & .oooooX & XoooooX
-        if open_dict[win_len]['both'] >= 1 or open_dict[win_len]['half'] >= 1 or open_dict[win_len]['close'] >= 1:
-            return True
-        
         # .oooo. & .ooooX
         if open_dict[win_len-1]['both'] >= 1 or open_dict[win_len-1]['half'] >= 1:
             return True
@@ -340,6 +368,8 @@ class Heuristic:
             "half_n2": 0,
             "half_n3": 0
         }
+        
+        
         for start_point, cur_empty_open_dict in empty_open_dict.items():
             d['both_n2'] += cur_empty_open_dict[win_len-2]['both']
             d['half_n1'] += cur_empty_open_dict[win_len-1]['half']
@@ -355,9 +385,9 @@ class Heuristic:
         return value
         
 
-    def estimate_value(self, state: GameState) -> float:      
+    def estimate_value(self, state: GameState) -> Tuple[float, List[Tuple[int, int]]]:      
         if state.done:
-            return 0.0
+            return 0.0, []
         
         board = state.board
         player = state.next_player
@@ -367,17 +397,28 @@ class Heuristic:
         
         player_all_length_dict = self.cal_all_length(board, player)
         player_open_dict = self.cal_open_dict(board, player_all_length_dict)
-        player_empty_open_dict = self.cal_empty_open_dict(board, player_all_length_dict)
-        
-        if self.player_is_already_win(player_open_dict, player_empty_open_dict):
-            return 1.0
+        player_empty_open_dict, player_important_pos_list = self.cal_empty_open_dict(board, player_all_length_dict)
         
         opponent_all_length_dict = self.cal_all_length(board, opponent)
         opponent_open_dict = self.cal_open_dict(board, opponent_all_length_dict)
-        opponent_empty_open_dict = self.cal_empty_open_dict(board, opponent_all_length_dict)
+        opponent_empty_open_dict, opponent_important_pos_list = self.cal_empty_open_dict(board, opponent_all_length_dict)
         
-        if self.opponent_is_already_win(opponent_open_dict):
-            return -1.0
+        important_pos_list = list(set(player_important_pos_list + opponent_important_pos_list))
+        
+        if self.is_already_win(player_open_dict):
+            return 1.0, important_pos_list
+        
+        
+        
+        if self.is_already_win(opponent_open_dict):
+            return -1.0, important_pos_list
+        
+        if self.player_is_immediate_win(player_open_dict, player_empty_open_dict):
+            return self.immediate_win_weight, important_pos_list
+        
+        if self.opponent_is_immediate_win(opponent_open_dict):
+            return -self.immediate_win_weight, important_pos_list
+        
         
         player_ad_value = self.cal_advantage_value(player_open_dict)
         opponent_ad_value = self.cal_advantage_value(opponent_open_dict)
@@ -391,7 +432,7 @@ class Heuristic:
         if player_empty_ad_value + opponent_empty_ad_value != 0:
             empty_ad_value = (player_empty_ad_value - opponent_empty_ad_value) / (player_empty_ad_value + opponent_empty_ad_value)
         
-        return ad_value * self.advantage_weight + empty_ad_value * self.empty_advantage_weight
+        return (ad_value * self.advantage_weight + empty_ad_value * self.empty_advantage_weight) * self.immediate_win_weight, important_pos_list
     
 
 def print_matrix(matrix):
