@@ -8,8 +8,7 @@ from constant import HEURISTIC_CFG
 
 from mcts import MCTS
 from game import GameAction, GameState, Game
-from heuristic import Heuristic
-from rollout import Rollout
+from mcts_config import MCTSConfig
 
 
 class GomokuGUI:
@@ -210,12 +209,14 @@ if __name__ == "__main__":
     os.environ["HTTP_PROXY"] = ""
     os.environ["HTTPS_PROXY"] = ""
     
-    heuristic = Heuristic(HEURISTIC_CFG)
-    agent = MCTS(
+    mcts_cfg = MCTSConfig(
         MCTS_SIMU_COUNT_PER_SEARCH, MCTS_SELECT_UCT, 
-        Rollout(ROLLOUT_PER_SIMU, ROLLOUT_DEPTH, heuristic, ROLLOUT_IMPORTANT_POS_WEIGHT, ROLLOUT_OTHER_POS_WEIGHT, ROLLOUT_USE_HEURISTIC_EPSILON), MCTS_ROLLOUT_WEIGHT, 
-        heuristic, MCTS_HEURISTIC_WEIGHT
+        ROLLOUT_PER_SIMU, ROLLOUT_DEPTH, HEURISTIC_CFG, 
+        ROLLOUT_IMPORTANT_POS_WEIGHT, ROLLOUT_OTHER_POS_WEIGHT, ROLLOUT_USE_HEURISTIC_EPSILON, 
+        HEURISTIC_CFG,
+        MCTS_ROLLOUT_WEIGHT, MCTS_HEURISTIC_WEIGHT
     )
+    agent = MCTS(mcts_cfg)
     
     game = Game()
 

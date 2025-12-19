@@ -4,6 +4,8 @@ from constant import MCTS_HEURISTIC_WEIGHT, MCTS_ROLLOUT_WEIGHT, MCTS_SELECT_UCT
 from constant import ROLLOUT_DEPTH, ROLLOUT_PER_SIMU, ROLLOUT_IMPORTANT_POS_WEIGHT, ROLLOUT_OTHER_POS_WEIGHT, ROLLOUT_USE_HEURISTIC_EPSILON
 from constant import HEURISTIC_CFG
 
+from mcts_config import MCTSConfig
+
 
 from game import GameAction, GameState, Game
 from mcts_node import MCTSNode
@@ -18,17 +20,18 @@ import time
     
    
 class MCTS:
-    def __init__(self, n_simulations: int, c_uct: float, 
-                rollout: Rollout, rollout_weight: float, 
-                heuristic: Heuristic, heuristic_weight: float):
-        self.n_simulations = n_simulations
-        self.c_uct = c_uct
+    def __init__(self, mcts_cfg: MCTSConfig):
+        self.n_simulations = mcts_cfg.simu_count_per_search
+        self.c_uct = mcts_cfg.c_uct
         
-        self.rollout = rollout
-        self.heuristic = heuristic
+        self.rollout = Rollout(
+            mcts_cfg.rollout_per_simu, mcts_cfg.rollout_depth,
+            Heuristic(mcts_cfg.rollout_heuristic_config),
+            mcts_cfg.rollout_important_pos_weight, mcts_cfg.rollout_other_pos_weight, mcts_cfg.rollout_use_heuristic_epsilon)
+        self.heuristic = Heuristic(mcts_cfg.heuristic_config)
         
-        self.rollout_weight = rollout_weight
-        self.heuristic_weight = heuristic_weight
+        self.rollout_weight = mcts_cfg.rollout_weight
+        self.heuristic_weight = mcts_cfg.heuristic_weight
         
         
     def search(self, root_state: GameState):
@@ -104,12 +107,14 @@ def print_visit_rate(visit_rate_dict: Dict[GameAction, float]):
 if __name__ == "__main__":
     game = Game()
     
-    heuristic = Heuristic(HEURISTIC_CFG)
-    agent = MCTS(
+    mcts_cfg = MCTSConfig(
         MCTS_SIMU_COUNT_PER_SEARCH, MCTS_SELECT_UCT, 
-        Rollout(ROLLOUT_PER_SIMU, ROLLOUT_DEPTH, heuristic, ROLLOUT_IMPORTANT_POS_WEIGHT, ROLLOUT_OTHER_POS_WEIGHT, ROLLOUT_USE_HEURISTIC_EPSILON), MCTS_ROLLOUT_WEIGHT, 
-        heuristic, MCTS_HEURISTIC_WEIGHT
+        ROLLOUT_PER_SIMU, ROLLOUT_DEPTH, HEURISTIC_CFG, 
+        ROLLOUT_IMPORTANT_POS_WEIGHT, ROLLOUT_OTHER_POS_WEIGHT, ROLLOUT_USE_HEURISTIC_EPSILON, 
+        HEURISTIC_CFG,
+        MCTS_ROLLOUT_WEIGHT, MCTS_HEURISTIC_WEIGHT
     )
+    agent = MCTS(mcts_cfg)
     
     for i in range(10):
         cur_state = game.get_state()
