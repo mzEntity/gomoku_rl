@@ -1,5 +1,8 @@
 from constant import WIDTH, WIN_LEN
-from constant import MCTS_SIMU_COUNT_PER_SEARCH, MCTS_SELECT_UCT, MCTS_HEURISTIC_WEIGHT, MCTS_ROLLOUT_WEIGHT
+from constant import MCTS_HEURISTIC_WEIGHT, MCTS_ROLLOUT_WEIGHT, MCTS_SELECT_UCT, MCTS_SIMU_COUNT_PER_SEARCH
+
+from constant import ROLLOUT_DEPTH, ROLLOUT_PER_SIMU
+from constant import HEURISTIC_CFG
 
 
 from game import GameAction, GameState, Game
@@ -33,21 +36,24 @@ class GomokuEnv:
         if state.winner == 0:
             return 0
         return state.winner * state.next_player
-        
+   
+   
+     
         
 class MCTS:
-    def __init__(self, env: GomokuEnv, use_rollout: bool = False, use_heuristic: bool = True):
+    def __init__(self, env: GomokuEnv, n_simulations: int, c_uct: float, 
+                rollout: Rollout, rollout_weight: float, 
+                heuristic: Heuristic, heuristic_weight: float):
         self.env = env
         
-        self.n_simulations = MCTS_SIMU_COUNT_PER_SEARCH
-        self.c_uct = MCTS_SELECT_UCT
+        self.n_simulations = n_simulations
+        self.c_uct = c_uct
         
-        self.rollout = None
-        self.heuristic = None
-        if use_rollout:
-            self.rollout = Rollout()
-        if use_heuristic:
-            self.heuristic = Heuristic()
+        self.rollout = rollout
+        self.heuristic = heuristic
+        
+        self.rollout_weight = rollout_weight
+        self.heuristic_weight = heuristic_weight
         
         
     def search(self, root_state: GameState):
@@ -83,19 +89,11 @@ class MCTS:
         if cur_node.is_terminal():
             value = self.env.get_value(cur_node.state)
         else:
-            value = 0
-            if self.rollout is not None and MCTS_ROLLOUT_WEIGHT > 0:
-                value_rollout = self.rollout.estimate_value(cur_node.state)
-                value = value_rollout
+            value_rollout = self.rollout.estimate_value(cur_node.state)
+            value_heuristic = self.heuristic.estimate_value(cur_node.state)
+
+            value = self.rollout_weight * value_rollout + self.heuristic_weight * value_heuristic
                 
-            if self.heuristic is not None and MCTS_HEURISTIC_WEIGHT > 0:
-                value_heuristic = self.heuristic.estimate_value(cur_node.state)
-                value = value_heuristic
-            
-            if self.rollout is not None and self.heuristic is not None and 0 < MCTS_ROLLOUT_WEIGHT < 1.0:
-                value = MCTS_ROLLOUT_WEIGHT * value_rollout + MCTS_HEURISTIC_WEIGHT * value_heuristic
-                
-        # print(value)
         cur_node.backup(value)
 
 
@@ -114,7 +112,11 @@ def print_visit_rate(visit_rate_dict: Dict[GameAction, float]):
         
 if __name__ == "__main__":
     game = Game()
-    agent = MCTS(GomokuEnv(), use_rollout=True, use_heuristic=True)
+    agent = MCTS(
+        GomokuEnv(), MCTS_SIMU_COUNT_PER_SEARCH, MCTS_SELECT_UCT, 
+        Rollout(ROLLOUT_PER_SIMU, ROLLOUT_DEPTH), MCTS_ROLLOUT_WEIGHT, 
+        Heuristic(HEURISTIC_CFG), MCTS_HEURISTIC_WEIGHT
+    )
     
     for i in range(10):
         cur_state = game.get_state()

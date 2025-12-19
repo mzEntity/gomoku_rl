@@ -1,14 +1,18 @@
-from constant import WIDTH, WIN_LEN, EMPTY
-from constant import HEURISTIC_ADVANTAGE_WEIGHT, HEURISTIC_EMPTY_ADVANTAGE_WEIGHT
-from constant import HEURISTIC_ADVANTAGE_WEIGHT_DICT, HEURISTIC_EMPTY_ADVANTAGE_WEIGHT_DICT
+from constant import EMPTY, WIDTH, WIN_LEN
 from game import GameState
 
 
 class Heuristic:
-    def __init__(self):
+    def __init__(self, heuristic_config):
         self.width = WIDTH
         self.win_len = WIN_LEN
         self.directions = [(0,1), (1,0), (1,1), (-1,1)]
+        
+        self.advantage_weight = heuristic_config['advantage_weight']
+        self.empty_advantage_weight = heuristic_config['empty_advantage_weight']
+        
+        self.advantage_weight_dict = heuristic_config['advantage_weight_dict']
+        self.empty_advantage_weight_dict = heuristic_config['empty_advantage_weight_dict']
         
     
     def cal_left_to_right(self, board, player):
@@ -321,8 +325,8 @@ class Heuristic:
         
         value = 0.0
         for title, occur_count in d.items():
-            if title in HEURISTIC_ADVANTAGE_WEIGHT_DICT:
-                value += occur_count * HEURISTIC_ADVANTAGE_WEIGHT_DICT[title]
+            if title in self.advantage_weight_dict:
+                value += occur_count * self.advantage_weight_dict[title]
         
         return value
     
@@ -345,8 +349,8 @@ class Heuristic:
         
         value = 0.0
         for title, occur_count in d.items():
-            if title in HEURISTIC_EMPTY_ADVANTAGE_WEIGHT_DICT:
-                value += occur_count * HEURISTIC_EMPTY_ADVANTAGE_WEIGHT_DICT[title]
+            if title in self.empty_advantage_weight_dict:
+                value += occur_count * self.empty_advantage_weight_dict[title]
         
         return value
         
@@ -387,7 +391,7 @@ class Heuristic:
         if player_empty_ad_value + opponent_empty_ad_value != 0:
             empty_ad_value = (player_empty_ad_value - opponent_empty_ad_value) / (player_empty_ad_value + opponent_empty_ad_value)
         
-        return ad_value * HEURISTIC_ADVANTAGE_WEIGHT + empty_ad_value * HEURISTIC_EMPTY_ADVANTAGE_WEIGHT
+        return ad_value * self.advantage_weight + empty_ad_value * self.empty_advantage_weight
     
 
 def print_matrix(matrix):

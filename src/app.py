@@ -1,8 +1,15 @@
 import gradio as gr
 import os
-from constant import WIDTH, BLACK, WHITE, EMPTY
+from constant import WIDTH, BLACK, WHITE, EMPTY, WIN_LEN
+from constant import MCTS_HEURISTIC_WEIGHT, MCTS_ROLLOUT_WEIGHT, MCTS_SELECT_UCT, MCTS_SIMU_COUNT_PER_SEARCH
+
+from constant import ROLLOUT_DEPTH, ROLLOUT_PER_SIMU
+from constant import HEURISTIC_CFG
+
 from mcts import MCTS, GomokuEnv
 from game import GameAction, GameState, Game
+from heuristic import Heuristic
+from rollout import Rollout
 
 
 class GomokuGUI:
@@ -207,7 +214,11 @@ if __name__ == "__main__":
     c_uct = 1
     
     game = Game()
-    agent = MCTS(GomokuEnv(), use_rollout=False, use_heuristic=True)
+    agent = MCTS(
+        GomokuEnv(), MCTS_SIMU_COUNT_PER_SEARCH, MCTS_SELECT_UCT, 
+        Rollout(ROLLOUT_PER_SIMU, ROLLOUT_DEPTH), MCTS_ROLLOUT_WEIGHT, 
+        Heuristic(HEURISTIC_CFG), MCTS_HEURISTIC_WEIGHT
+    )
 
     gui = GomokuGUI(game, agent)
     demo = gui.demo

@@ -1,4 +1,3 @@
-from constant import ROLLOUT_PER_SIMU, ROLLOUT_DEPTH
 from game import GameAction, GameState, Game
 
 from typing import Tuple
@@ -6,9 +5,9 @@ from typing import Tuple
 import random
 
 class Rollout:
-    def __init__(self):
-        self.n_rollout = ROLLOUT_PER_SIMU
-        self.depth = ROLLOUT_DEPTH
+    def __init__(self, n_rollout: int, depth: int):
+        self.n_rollout = n_rollout
+        self.depth = depth
         
         
     def estimate_value(self, state: GameState) -> float:
@@ -16,7 +15,7 @@ class Rollout:
         lose_count = 0
         draw_count = 0
         for _ in range(self.n_rollout):
-            winner, depth = self.roll_out(state)
+            winner, _ = self.roll_out(state)
             if winner == state.next_player:
                 win_count += 1
             elif winner == 0:
