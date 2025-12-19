@@ -6,7 +6,7 @@ WHITE: int = BLACK * -1
 EMPTY: int = 0
 FIRST_PLAYER: int = BLACK
 
-WIDTH: int = 12
+WIDTH: int = 9
 WIN_LEN: int = 5
 
 

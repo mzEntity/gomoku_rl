@@ -3,7 +3,8 @@ class MCTSConfig:
                  rollout_per_simu: int, rollout_depth: int, rollout_heuristic_config,
                  rollout_important_pos_weight: int, rollout_other_pos_weight: int, rollout_use_heuristic_epsilon: float, 
                  heuristic_config,
-                 rollout_weight: float, heuristic_weight: float):
+                 rollout_weight: float, heuristic_weight: float,
+                 use_break_early: bool=False):
         self.simu_count_per_search = simu_count_per_search
         self.c_uct = c_uct
         
@@ -19,3 +20,5 @@ class MCTSConfig:
         
         self.rollout_weight= rollout_weight
         self.heuristic_weight = heuristic_weight
+        
+        self.use_break_early = use_break_early

@@ -32,6 +32,7 @@ class MCTS:
         
         self.rollout_weight = mcts_cfg.rollout_weight
         self.heuristic_weight = mcts_cfg.heuristic_weight
+        self.use_break_early = mcts_cfg.use_break_early
         
         
     def search(self, root_state: GameState):
@@ -42,8 +43,7 @@ class MCTS:
         
         for i in range(self.n_simulations):
             break_early = self.simulation(root_node)
-            if break_early:
-                # print(f"{i}/{self.n_simulations} break early")
+            if self.use_break_early and break_early:
                 break
         
         max_visit_rate = -math.inf
